@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Viis Compliance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0A0A0A;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 340px;
+    }
+
+    /* ── LOGO ── */
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 44px;
+    }
+
+    .logo svg {
+      margin-bottom: 14px;
+    }
+
+    .logo-wordmark {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .logo-tagline {
+      font-size: 8px;
+      color: rgba(255,255,255,0.28);
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ── FORM ── */
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.3px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    input::placeholder {
+      color: rgba(255,255,255,0.18);
+    }
+
+    /* ── ERROR ── */
+    .error-msg {
+      display: none;
+      padding: 10px 14px;
+      background: rgba(239,68,68,0.08);
+      border: 0.5px solid rgba(239,68,68,0.22);
+      border-radius: 7px;
+      font-size: 12px;
+      color: #F87171;
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    /* ── BUTTON ── */
+    .btn-signin {
+      width: 100%;
+      padding: 11px;
+      margin-top: 2px;
+      background: rgba(255,255,255,0.07);
+      border: 0.5px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-signin:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .btn-signin:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 52px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.13);
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+
+    <div class="logo">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#888888"/>
+            <stop offset="100%" stop-color="#ffffff"/>
+          </linearGradient>
+        </defs>
+        <circle cx="8.5" cy="5" r="2.3" fill="url(#lg)"/>
+        <circle cx="15.5" cy="5" r="2.3" fill="url(#lg)"/>
+        <path d="M3.5 9.5 L12 21 L20.5 9.5" stroke="url(#lg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="logo-wordmark">viis</div>
+      <div class="logo-tagline">compliance</div>
+    </div>
+
+    <form class="form" id="loginForm" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@company.com" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+      </div>
+      <div class="error-msg" id="errorMsg"></div>
+      <button type="submit" class="btn-signin" id="signInBtn">Sign in</button>
+    </form>
+
+    <div class="footer">Access is by invitation only.</div>
+
+  </div>
+
+  <script>
+    // ─── PASTE YOUR SUPABASE CREDENTIALS HERE ───────────────────────────────
+    const SUPABASE_URL  = 'https://qftzakhljmkxlinznjtp.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmdHpha2hsam1reGxpbnpuanRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDc2NDQsImV4cCI6MjA5NjMyMzY0NH0.WSz9Ao9HF-1Sv1webc9PpUkSvoW5YtCsD7gyvozYPl8';
+    // ────────────────────────────────────────────────────────────────────────
+
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // Already logged in? Skip straight to the app.
+    (async () => {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) window.location.href = 'documents.html';
+    })();
+
+    const form    = document.getElementById('loginForm');
+    const btn     = document.getElementById('signInBtn');
+    const errorEl = document.getElementById('errorMsg');
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.add('visible');
+    }
+
+    function clearError() {
+      errorEl.classList.remove('visible');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        showError('Please enter your email and password.');
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Signing in…';
+
+      const { error } = await db.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        showError('Incorrect email or password.');
+        btn.disabled    = false;
+        btn.textContent = 'Sign in';
+        return;
+      }
+
+      window.location.href = 'documents.html';
+    });
+  </script>
+
+</body>
+</html>
