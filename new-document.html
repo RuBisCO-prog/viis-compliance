@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Document — Viis Compliance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:'Outfit',sans-serif;background:#0A0A0A;color:#fff;display:flex;flex-direction:column}
+
+    /* TOPBAR */
+    .topbar{display:flex;align-items:center;justify-content:space-between;height:50px;padding:0 24px;border-bottom:0.5px solid rgba(255,255,255,0.07);background:#0D0D0D;flex-shrink:0}
+    .logo-area{display:flex;align-items:center;gap:9px;cursor:default}
+    .logo-stack{display:flex;flex-direction:column}
+    .logo-wordmark{font-size:15px;font-weight:700;color:#fff;letter-spacing:-0.3px;line-height:1}
+    .logo-tagline{font-size:7px;color:rgba(255,255,255,0.45);letter-spacing:1.8px;text-transform:uppercase;margin-top:2.5px}
+    .back-link{font-size:12px;color:rgba(255,255,255,0.55);text-decoration:none;display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:6px;border:0.5px solid rgba(255,255,255,0.1);transition:color 0.15s,background 0.15s}
+    .back-link:hover{color:#fff;background:rgba(255,255,255,0.05)}
+
+    /* PAGE */
+    .page{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:40px 24px 60px}
+    .form-wrap{width:100%;max-width:560px}
+    .page-title{font-size:22px;font-weight:600;color:#fff;letter-spacing:-0.4px;margin-bottom:5px}
+    .page-sub{font-size:13px;color:rgba(255,255,255,0.42);margin-bottom:32px;line-height:1.5}
+
+    /* FORM */
+    .form{display:flex;flex-direction:column;gap:20px}
+    .field{display:flex;flex-direction:column;gap:7px}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    label{font-size:12px;font-weight:500;color:rgba(255,255,255,0.55);letter-spacing:0.3px}
+    .optional{font-weight:400;color:rgba(255,255,255,0.28);margin-left:4px}
+
+    input[type="text"],select,textarea{
+      width:100%;padding:11px 14px;
+      background:rgba(255,255,255,0.04);
+      border:0.5px solid rgba(255,255,255,0.12);
+      border-radius:8px;font-size:13px;
+      font-family:'Outfit',sans-serif;color:#fff;
+      outline:none;transition:border-color 0.15s
+    }
+    input[type="text"]:focus,select:focus,textarea:focus{border-color:rgba(255,255,255,0.35)}
+    input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.22)}
+    select option{background:#1A1A1A;color:#fff}
+    textarea{resize:vertical;min-height:88px;line-height:1.5}
+
+    /* OWNER SEARCH */
+    .owner-wrap{position:relative}
+    .owner-input-row{display:flex;align-items:center;position:relative}
+    .owner-input-row i{position:absolute;left:12px;font-size:14px;color:rgba(255,255,255,0.3);pointer-events:none}
+    .owner-input-row input{padding-left:34px}
+    .owner-dd{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#181818;border:0.5px solid rgba(255,255,255,0.12);border-radius:8px;z-index:50;display:none;max-height:220px;overflow-y:auto}
+    .owner-dd.open{display:block}
+    .od-label{font-size:10px;font-weight:500;color:rgba(255,255,255,0.3);letter-spacing:0.8px;text-transform:uppercase;padding:8px 12px 4px}
+    .od-divider{height:0.5px;background:rgba(255,255,255,0.07);margin:4px 0}
+    .od-item{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.78);transition:background 0.1s}
+    .od-item:hover{background:rgba(255,255,255,0.05)}
+    .od-empty{padding:16px 12px;font-size:12px;color:rgba(255,255,255,0.3);text-align:center}
+    .av-sm{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.08);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:rgba(255,255,255,0.7);flex-shrink:0}
+
+    /* DIVIDER */
+    .divider{height:0.5px;background:rgba(255,255,255,0.07);margin:2px 0}
+
+    /* MODE TOGGLE */
+    .mode-toggle{display:flex;gap:6px;margin-bottom:14px}
+    .mode-btn{padding:7px 15px;border-radius:7px;font-size:12px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);transition:all 0.15s;display:flex;align-items:center;gap:5px}
+    .mode-btn.active{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.22);color:#fff}
+    .mode-btn:hover:not(.active){color:rgba(255,255,255,0.8)}
+
+    /* UPLOAD ZONE */
+    .upload-zone{border:0.5px dashed rgba(255,255,255,0.16);border-radius:10px;padding:38px 24px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:center}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:rgba(255,255,255,0.38);background:rgba(255,255,255,0.02)}
+    .upload-zone i{font-size:26px;color:rgba(255,255,255,0.28)}
+    .upload-zone p{font-size:13px;color:rgba(255,255,255,0.58)}
+    .upload-zone .sub{font-size:11px;color:rgba(255,255,255,0.3)}
+    .browse-link{color:rgba(255,255,255,0.85);text-decoration:underline;text-underline-offset:2px}
+
+    /* FILE SELECTED */
+    .file-selected{border:0.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px 15px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.03)}
+    .file-icon{width:36px;height:36px;border-radius:7px;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .file-icon i{font-size:18px;color:rgba(255,255,255,0.6)}
+    .file-info{flex:1;min-width:0}
+    .file-name{font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .file-size{font-size:11px;color:rgba(255,255,255,0.38);margin-top:2px}
+    .file-remove{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:18px;padding:4px;transition:color 0.15s;flex-shrink:0}
+    .file-remove:hover{color:#fff}
+
+    /* WRITE INFO */
+    .write-info{border:0.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;background:rgba(255,255,255,0.02)}
+    .write-info i{font-size:26px;color:rgba(255,255,255,0.25)}
+    .write-info .wi-title{font-size:14px;font-weight:500;color:rgba(255,255,255,0.7)}
+    .write-info .wi-sub{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.6;max-width:340px}
+
+    /* TEMPLATE PLACEHOLDER */
+    .template-placeholder{border:0.5px dashed rgba(255,255,255,0.1);border-radius:10px;padding:36px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+    .template-placeholder i{font-size:26px;color:rgba(255,255,255,0.2)}
+    .tp-title{font-size:14px;font-weight:500;color:rgba(255,255,255,0.5)}
+    .tp-sub{font-size:12px;color:rgba(255,255,255,0.28);line-height:1.6;max-width:340px}
+    .tp-badge{margin-top:4px;display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;color:rgba(255,255,255,0.35);border:0.5px solid rgba(255,255,255,0.1)}
+
+    /* ERROR + SUBMIT */
+    .error-msg{display:none;padding:10px 14px;background:rgba(239,68,68,0.08);border:0.5px solid rgba(239,68,68,0.2);border-radius:7px;font-size:12px;color:#F87171}
+    .error-msg.visible{display:block}
+    .btn-submit{width:100%;padding:12px;border-radius:8px;font-size:14px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;transition:background 0.15s;margin-top:4px}
+    .btn-submit:hover{background:rgba(255,255,255,0.14)}
+    .btn-submit:disabled{opacity:0.4;cursor:not-allowed}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+
+<div style="display:flex;flex-direction:column;height:100vh">
+  <div class="topbar">
+    <div class="logo-area">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#888"/><stop offset="100%" stop-color="#fff"/></linearGradient></defs>
+        <circle cx="8.5" cy="5" r="2.3" fill="url(#lg)"/>
+        <circle cx="15.5" cy="5" r="2.3" fill="url(#lg)"/>
+        <path d="M3.5 9.5 L12 21 L20.5 9.5" stroke="url(#lg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="logo-stack">
+        <span class="logo-wordmark">viis</span>
+        <span class="logo-tagline">compliance</span>
+      </div>
+    </div>
+    <a class="back-link" href="documents.html">
+      <i class="ti ti-arrow-left" style="font-size:13px"></i>Documents
+    </a>
+  </div>
+
+  <div class="page">
+    <div class="form-wrap">
+      <div class="page-title">New document</div>
+      <div class="page-sub">Creates a draft at version 1.1. Submit for review when ready.</div>
+
+      <form class="form" id="docForm" novalidate>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="docType">Document type</label>
+            <select id="docType">
+              <option value="">Select type…</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Owner</label>
+            <div class="owner-wrap">
+              <div class="owner-input-row">
+                <i class="ti ti-search"></i>
+                <input type="text" id="ownerSearch" placeholder="Search users…" autocomplete="off">
+              </div>
+              <div class="owner-dd" id="ownerDd"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="docTitle">Title</label>
+          <input type="text" id="docTitle" placeholder="e.g. Sample Collection Procedure" required>
+        </div>
+
+        <div class="field">
+          <label for="docDesc">Purpose / Description<span class="optional">optional</span></label>
+          <textarea id="docDesc" placeholder="Briefly describe the purpose of this document…"></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>Content</label>
+          <div class="mode-toggle">
+            <button type="button" class="mode-btn active" id="btn-upload">
+              <i class="ti ti-upload" style="font-size:12px"></i>Upload file
+            </button>
+            <button type="button" class="mode-btn" id="btn-write">
+              <i class="ti ti-pencil" style="font-size:12px"></i>Write in browser
+            </button>
+            <button type="button" class="mode-btn" id="btn-template">
+              <i class="ti ti-copy" style="font-size:12px"></i>From template
+            </button>
+          </div>
+
+          <!-- Upload -->
+          <div id="area-upload">
+            <div class="upload-zone" id="uploadZone">
+              <i class="ti ti-cloud-upload"></i>
+              <p>Drag & drop or <span class="browse-link">browse files</span></p>
+              <p class="sub">PDF, Word, Excel, images — any file type</p>
+            </div>
+            <div class="file-selected hidden" id="fileSelected">
+              <div class="file-icon"><i class="ti ti-file" id="fileTypeIcon"></i></div>
+              <div class="file-info">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+              </div>
+              <button type="button" class="file-remove" id="fileRemove">
+                <i class="ti ti-x"></i>
+              </button>
+            </div>
+            <input type="file" id="fileInput" hidden>
+          </div>
+
+          <!-- Write -->
+          <div id="area-write" class="hidden">
+            <div class="write-info">
+              <i class="ti ti-writing"></i>
+              <div class="wi-title">Full editor opens after creation</div>
+              <div class="wi-sub">Click Create document and you'll be taken directly to a rich text editor where you can write and format the document content.</div>
+            </div>
+          </div>
+
+          <!-- Template -->
+          <div id="area-template" class="hidden">
+            <div class="template-placeholder">
+              <i class="ti ti-copy"></i>
+              <div class="tp-title">Template library coming soon</div>
+              <div class="tp-sub">Templates will be managed from a dedicated section. Create standardised document structures that your whole team can use as a starting point.</div>
+              <span class="tp-badge">In backlog</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+        <button type="submit" class="btn-submit" id="submitBtn">Create document</button>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/auth-guard.js"></script>
+<script>
+  let allUsers      = [];
+  let selectedOwnerId = null;
+  let selectedFile  = null;
+  let mode          = 'upload';
+  let session;
+
+  const RECENT_KEY = 'viis_recent_owners';
+
+  // ── HELPERS ────────────────────────────────────────────────────────────────
+  function initials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+  }
+
+  function fileIcon(type) {
+    if (type.includes('pdf'))                            return 'ti-file-type-pdf';
+    if (type.includes('word') || type.includes('document')) return 'ti-file-type-docx';
+    if (type.includes('excel') || type.includes('sheet')) return 'ti-file-type-xls';
+    if (type.includes('image'))                          return 'ti-photo';
+    return 'ti-file';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function clearError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  // ── RECENT OWNERS ─────────────────────────────────────────────────────────
+  function getRecent() {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function saveRecent(user) {
+    const r = getRecent().filter(u => u.id !== user.id);
+    r.unshift(user);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(r.slice(0, 3))); } catch {}
+  }
+
+  // ── OWNER SEARCH ──────────────────────────────────────────────────────────
+  function renderOwnerDd(query) {
+    const dd = document.getElementById('ownerDd');
+    const q  = (query || '').toLowerCase();
+    const filtered = allUsers.filter(u =>
+      !q || u.full_name.toLowerCase().includes(q)
+    );
+    const recent = getRecent();
+    let html = '';
+
+    if (!q && recent.length) {
+      html += `<div class="od-label">Recent</div>`;
+      recent.forEach(u => {
+        html += `<div class="od-item" data-id="${u.id}" data-name="${u.full_name}">
+          <span class="av-sm">${initials(u.full_name)}</span>${u.full_name}</div>`;
+      });
+      if (filtered.length) html += `<div class="od-divider"></div><div class="od-label">All users</div>`;
+    }
+
+    if (filtered.length) {
+      filtered.forEach(u => {
+        html += `<div class="od-item" data-id="${u.id}" data-name="${u.full_name}">
+          <span class="av-sm">${initials(u.full_name)}</span>${u.full_name}</div>`;
+      });
+    } else if (!recent.length || q) {
+      html = '<div class="od-empty">No users found</div>';
+    }
+
+    dd.innerHTML = html;
+    dd.classList.add('open');
+
+    dd.querySelectorAll('.od-item').forEach(item => {
+      item.addEventListener('click', () => {
+        selectedOwnerId = item.dataset.id;
+        document.getElementById('ownerSearch').value = item.dataset.name;
+        dd.classList.remove('open');
+        saveRecent({ id: item.dataset.id, full_name: item.dataset.name });
+      });
+    });
+  }
+
+  const ownerInput = document.getElementById('ownerSearch');
+  ownerInput.addEventListener('focus', () => renderOwnerDd(ownerInput.value));
+  ownerInput.addEventListener('input', () => {
+    selectedOwnerId = null;
+    renderOwnerDd(ownerInput.value);
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.owner-wrap'))
+      document.getElementById('ownerDd').classList.remove('open');
+  }, true);
+
+  // ── MODE TOGGLE ───────────────────────────────────────────────────────────
+  function setMode(m) {
+    mode = m;
+    ['upload','write','template'].forEach(k => {
+      document.getElementById('btn-'+k).classList.toggle('active', k === m);
+      document.getElementById('area-'+k).classList.toggle('hidden', k !== m);
+    });
+  }
+
+  document.getElementById('btn-upload').addEventListener('click',   () => setMode('upload'));
+  document.getElementById('btn-write').addEventListener('click',    () => setMode('write'));
+  document.getElementById('btn-template').addEventListener('click', () => setMode('template'));
+
+  // ── FILE HANDLING ─────────────────────────────────────────────────────────
+  function setFile(file) {
+    selectedFile = file;
+    document.getElementById('uploadZone').classList.add('hidden');
+    document.getElementById('fileSelected').classList.remove('hidden');
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = fmtSize(file.size);
+    document.getElementById('fileTypeIcon').className = 'ti ' + fileIcon(file.type);
+  }
+  function clearFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('uploadZone').classList.remove('hidden');
+    document.getElementById('fileSelected').classList.add('hidden');
+  }
+
+  document.getElementById('uploadZone').addEventListener('click', () =>
+    document.getElementById('fileInput').click());
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) setFile(e.target.files[0]);
+  });
+  document.getElementById('fileRemove').addEventListener('click', clearFile);
+
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  });
+
+  // ── LOAD FORM DATA ────────────────────────────────────────────────────────
+  async function loadFormData() {
+    const [typesRes, usersRes] = await Promise.all([
+      db.from('document_types').select('id,name,prefix').eq('is_active', true).order('name'),
+      db.from('profiles').select('id,full_name').order('full_name')
+    ]);
+
+    // Document types
+    const sel = document.getElementById('docType');
+    if (typesRes.error || !typesRes.data?.length) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.disabled = true;
+      opt.textContent = typesRes.error
+        ? 'Error loading types — check console'
+        : 'No types found — add them in Supabase';
+      sel.appendChild(opt);
+      if (typesRes.error) console.error('Types error:', typesRes.error);
+    } else {
+      typesRes.data.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.prefix} — ${t.name}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    // Users
+    allUsers = usersRes.data || [];
+    if (usersRes.error) console.error('Users error:', usersRes.error);
+
+    // Pre-select current user as owner
+    if (session) {
+      const me = allUsers.find(u => u.id === session.user.id);
+      if (me) {
+        selectedOwnerId = me.id;
+        document.getElementById('ownerSearch').value = me.full_name;
+      }
+    }
+  }
+
+  // ── SUBMIT ────────────────────────────────────────────────────────────────
+  document.getElementById('docForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    clearError();
+
+    const typeId = document.getElementById('docType').value;
+    const title  = document.getElementById('docTitle').value.trim();
+    const desc   = document.getElementById('docDesc').value.trim();
+
+    if (!typeId)        { showError('Please select a document type.'); return; }
+    if (!title)         { showError('Please enter a document title.'); return; }
+    if (!selectedOwnerId) { showError('Please select an owner.'); return; }
+    if (mode === 'upload' && !selectedFile) {
+      showError('Please upload a file, or switch to Write in browser.'); return;
+    }
+    if (mode === 'template') {
+      showError('Template library is not yet available. Use Upload or Write in browser.'); return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating…';
+
+    try {
+      // 1 — Generate document number
+      const { data: docNumber, error: numErr } = await db.rpc('generate_document_number', { type_id: typeId });
+      if (numErr) throw new Error('Could not generate document number: ' + numErr.message);
+
+      // 2 — Insert document
+      const { data: doc, error: docErr } = await db
+        .from('documents')
+        .insert({
+          document_number: docNumber,
+          title,
+          document_type_id: typeId,
+          owner_id: selectedOwnerId,
+          created_by: session.user.id
+        })
+        .select()
+        .single();
+      if (docErr) throw new Error('Could not create document: ' + docErr.message);
+
+      // 3 — Upload file if needed
+      let fileUrl = null, fileName = null, fileType = null;
+      if (mode === 'upload' && selectedFile) {
+        btn.textContent = 'Uploading file…';
+        const safe = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const path = `${doc.id}/${Date.now()}_${safe}`;
+        const { error: upErr } = await db.storage
+          .from('documents')
+          .upload(path, selectedFile, { contentType: selectedFile.type });
+        if (upErr) throw new Error('File upload failed: ' + upErr.message);
+        fileUrl  = path;
+        fileName = selectedFile.name;
+        fileType = selectedFile.type;
+      }
+
+      // 4 — Insert version 1.1 draft
+      const { error: verErr } = await db.from('document_versions').insert({
+        document_id:        doc.id,
+        version_number:     '1.1',
+        major_version:      1,
+        minor_version:      1,
+        status:             'draft',
+        content:            null,
+        file_url:           fileUrl,
+        file_name:          fileName,
+        file_type:          fileType,
+        change_description: desc || 'Initial draft',
+        created_by:         session.user.id
+      });
+      if (verErr) throw new Error('Could not save version: ' + verErr.message);
+
+      // 5 — Audit trail
+      await db.from('audit_trail').insert({
+        entity_type:  'document',
+        entity_id:    doc.id,
+        action:       'created',
+        performed_by: session.user.id,
+        metadata:     { document_number: docNumber, title, version: '1.1', mode }
+      });
+
+      // 6 — Redirect (write mode goes straight to editor)
+      window.location.href = mode === 'write'
+        ? `document.html?id=${doc.id}&edit=true`
+        : `document.html?id=${doc.id}`;
+
+    } catch (err) {
+      showError(err.message);
+      btn.disabled = false;
+      btn.textContent = 'Create document';
+    }
+  });
+
+  // ── BOOT ──────────────────────────────────────────────────────────────────
+  (async () => {
+    session = await requireAuth();
+    if (!session) return;
+    await loadFormData();
+  })();
+</script>
+</body>
+</html>
