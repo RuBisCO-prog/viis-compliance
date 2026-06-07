@@ -26,7 +26,6 @@
       max-width: 340px;
     }
 
-    /* ── LOGO ── */
     .logo {
       display: flex;
       flex-direction: column;
@@ -34,9 +33,7 @@
       margin-bottom: 44px;
     }
 
-    .logo svg {
-      margin-bottom: 14px;
-    }
+    .logo svg { margin-bottom: 14px; }
 
     .logo-wordmark {
       font-size: 22px;
@@ -54,7 +51,22 @@
       margin-top: 4px;
     }
 
-    /* ── FORM ── */
+    .form-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .form-subtitle {
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
     .form {
       display: flex;
       flex-direction: column;
@@ -93,11 +105,8 @@
       border-color: rgba(255,255,255,0.35);
     }
 
-    input::placeholder {
-      color: rgba(255,255,255,0.18);
-    }
+    input::placeholder { color: rgba(255,255,255,0.18); }
 
-    /* ── ERROR ── */
     .error-msg {
       display: none;
       padding: 10px 14px;
@@ -108,12 +117,9 @@
       color: #F87171;
     }
 
-    .error-msg.visible {
-      display: block;
-    }
+    .error-msg.visible { display: block; }
 
-    /* ── BUTTON ── */
-    .btn-signin {
+    .btn {
       width: 100%;
       padding: 11px;
       margin-top: 2px;
@@ -129,17 +135,16 @@
       letter-spacing: 0.2px;
     }
 
-    .btn-signin:hover {
+    .btn:hover {
       background: rgba(255,255,255,0.12);
       border-color: rgba(255,255,255,0.25);
     }
 
-    .btn-signin:disabled {
+    .btn:disabled {
       opacity: 0.45;
       cursor: not-allowed;
     }
 
-    /* ── FOOTER ── */
     .footer {
       margin-top: 52px;
       font-size: 11px;
@@ -147,6 +152,8 @@
       text-align: center;
       letter-spacing: 0.2px;
     }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -169,60 +176,82 @@
       <div class="logo-tagline">compliance</div>
     </div>
 
-    <form class="form" id="loginForm" novalidate>
-      <div class="field">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="you@company.com" autocomplete="email" required>
-      </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
-      </div>
-      <div class="error-msg" id="errorMsg"></div>
-      <button type="submit" class="btn-signin" id="signInBtn">Sign in</button>
-    </form>
+    <!-- LOGIN FORM -->
+    <div id="loginView">
+      <form class="form" id="loginForm" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@company.com" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <div class="error-msg" id="loginError"></div>
+        <button type="submit" class="btn" id="loginBtn">Sign in</button>
+      </form>
+    </div>
+
+    <!-- SET PASSWORD FORM (shown on invite) -->
+    <div id="setPasswordView" class="hidden">
+      <div class="form-title">Welcome to Viis</div>
+      <div class="form-subtitle">You have been invited. Set a password to activate your account.</div>
+      <form class="form" id="setPasswordForm" novalidate>
+        <div class="field">
+          <label for="newPassword">New password</label>
+          <input type="password" id="newPassword" placeholder="Min. 8 characters" required>
+        </div>
+        <div class="field">
+          <label for="confirmPassword">Confirm password</label>
+          <input type="password" id="confirmPassword" placeholder="Repeat password" required>
+        </div>
+        <div class="error-msg" id="setPasswordError"></div>
+        <button type="submit" class="btn" id="setPasswordBtn">Activate account</button>
+      </form>
+    </div>
 
     <div class="footer">Access is by invitation only.</div>
 
   </div>
 
   <script>
-    // ─── PASTE YOUR SUPABASE CREDENTIALS HERE ───────────────────────────────
     const SUPABASE_URL  = 'https://qftzakhljmkxlinznjtp.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmdHpha2hsam1reGxpbnpuanRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDc2NDQsImV4cCI6MjA5NjMyMzY0NH0.WSz9Ao9HF-1Sv1webc9PpUkSvoW5YtCsD7gyvozYPl8';
-    // ────────────────────────────────────────────────────────────────────────
 
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    // Already logged in? Skip straight to the app.
-    (async () => {
-      const { data: { session } } = await db.auth.getSession();
-      if (session) window.location.href = 'documents.html';
-    })();
+    const loginView       = document.getElementById('loginView');
+    const setPasswordView = document.getElementById('setPasswordView');
 
-    const form    = document.getElementById('loginForm');
-    const btn     = document.getElementById('signInBtn');
-    const errorEl = document.getElementById('errorMsg');
+    // Detect invite or recovery token in URL hash
+    const hash   = window.location.hash;
+    const isInvite = hash.includes('type=invite') || hash.includes('type=recovery');
 
-    function showError(msg) {
-      errorEl.textContent = msg;
-      errorEl.classList.add('visible');
+    if (isInvite) {
+      loginView.classList.add('hidden');
+      setPasswordView.classList.remove('hidden');
+    } else {
+      // If already logged in, go straight to the app
+      (async () => {
+        const { data: { session } } = await db.auth.getSession();
+        if (session) window.location.href = 'documents.html';
+      })();
     }
 
-    function clearError() {
-      errorEl.classList.remove('visible');
-    }
-
-    form.addEventListener('submit', async (e) => {
+    // ── LOGIN ────────────────────────────────────────────────────────────────
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      clearError();
+      const errorEl = document.getElementById('loginError');
+      const btn     = document.getElementById('loginBtn');
+      errorEl.classList.remove('visible');
 
       const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
       if (!email || !password) {
-        showError('Please enter your email and password.');
+        errorEl.textContent = 'Please enter your email and password.';
+        errorEl.classList.add('visible');
         return;
       }
 
@@ -232,9 +261,48 @@
       const { error } = await db.auth.signInWithPassword({ email, password });
 
       if (error) {
-        showError('Incorrect email or password.');
+        errorEl.textContent = 'Incorrect email or password.';
+        errorEl.classList.add('visible');
         btn.disabled    = false;
         btn.textContent = 'Sign in';
+        return;
+      }
+
+      window.location.href = 'documents.html';
+    });
+
+    // ── SET PASSWORD ─────────────────────────────────────────────────────────
+    document.getElementById('setPasswordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById('setPasswordError');
+      const btn     = document.getElementById('setPasswordBtn');
+      errorEl.classList.remove('visible');
+
+      const newPassword     = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (newPassword.length < 8) {
+        errorEl.textContent = 'Password must be at least 8 characters.';
+        errorEl.classList.add('visible');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        errorEl.textContent = 'Passwords do not match.';
+        errorEl.classList.add('visible');
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Activating…';
+
+      const { error } = await db.auth.updateUser({ password: newPassword });
+
+      if (error) {
+        errorEl.textContent = 'Something went wrong. Try requesting a new invite.';
+        errorEl.classList.add('visible');
+        btn.disabled    = false;
+        btn.textContent = 'Activate account';
         return;
       }
 
